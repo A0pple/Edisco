@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edisco - ויקיפדיה בזמן אמת</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&family=Rubik:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-bolt"></i>
+                <h1>Edisco</h1>
+            </div>
+            <p class="subtitle">ניטור עריכות ויקיפדיה בזמן אמת</p>
+            <div class="global-controls"
+                style="margin-top: 1rem; display: flex; justify-content: center; gap: 1rem; align-items: center;">
+                <select id="globalPeriod" class="glass-select search-select"
+                    style="background: rgba(30, 41, 59, 0.5); color: white;">
+                    <option value="24h">24 שעות</option>
+                    <option value="7d">7 ימים</option>
+                </select>
+                <label class="toggle-switch"
+                    style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-color);">
+                    <input type="checkbox" id="anonOnlyToggle">
+                    <span class="slider"></span>
+                    <span class="label-text"><i class="fa-solid fa-user-secret"></i> הצג עריכות אנונימיות בלבד</span>
+                </label>
+            </div>
+        </header>
+
+
+
+        <main class="grid-layout">
+            <!-- Column 1: Live Feed -->
+            <section class="column feed-column glass-panel">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-satellite-dish"></i> שידור חי</h2>
+                    <div class="controls">
+                        <select id="limitSelect" class="glass-select">
+                            <optgroup label="כמות עריכות">
+                                <option value="25">25 אחרונים</option>
+                                <option value="50" selected>50 אחרונים</option>
+                                <option value="100">100 אחרונים</option>
+                                <option value="200">200 אחרונים</option>
+                                <option value="500">500 אחרונים</option>
+                                <option value="custom">מותאם אישית...</option>
+                            </optgroup>
+                            <optgroup label="לפי זמן">
+                                <option value="1h">שעה אחרונה</option>
+                                <option value="24h">24 שעות אחרונות</option>
+                            </optgroup>
+                        </select>
+                        <span class="live-indicator"></span>
+                    </div>
+                </div>
+                <div id="feedList" class="feed-list">
+                    <div class="empty-state">ממתין לעריכות חדשות...</div>
+                </div>
+            </section>
+
+            <!-- Column 2: Top Edited -->
+            <section class="column top-column glass-panel">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-chart-bar"></i>פעילות</h2>
+                    <div class="controls">
+                        <select id="topType" class="glass-select search-select" style="margin-left: 5px;">
+                            <option value="articles">ערכים</option>
+                            <option value="users">עורכים</option>
+                        </select>
+                        <select id="topPeriod" class="glass-select search-select" style="margin-left: 0;">
+                            <option value="24h">24 שעות</option>
+                            <option value="7d">7 ימים</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="topEditedList" class="top-list">
+                    <div class="empty-state">טוען...</div>
+                </div>
+            </section>
+
+            <!-- Column 3: Top Talk Pages -->
+            <section class="column talk-column glass-panel">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-comments"></i>מחלוקת</h2>
+                    <div class="controls">
+                        <select id="topTalkPeriod" class="glass-select search-select">
+                            <option value="24h">24 שעות</option>
+                            <option value="7d">7 ימים</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="topTalkList" class="top-list">
+                    <div class="empty-state">טוען...</div>
+                </div>
+            </section>
+
+            <!-- Column 4: New Articles -->
+            <section class="column new-column glass-panel">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-plus-circle"></i> ערכים חדשים</h2>
+                    <div class="controls">
+                        <select id="newPeriod" class="glass-select search-select">
+                            <option value="24h">24 שעות</option>
+                            <option value="7d">7 ימים</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="newArticlesList" class="top-list">
+                    <div class="empty-state">טוען...</div>
+                </div>
+            </section>
+
+            <!-- Column 3: Top Viewed -->
+            <section class="column search-column glass-panel">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-eye"></i> הנצפים ביותר</h2>
+                    <div class="controls">
+                        <select id="topViewedPeriod" class="glass-select search-select">
+                            <option value="24h">24 שעות</option>
+                            <option value="7d">7 ימים</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="topViewedList" class="results-list">
+                    <div class="empty-state">טוען...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
