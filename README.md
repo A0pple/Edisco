@@ -1,6 +1,10 @@
 # Edisco - Wikipedia Live Monitor
 Edisco is a real-time monitoring dashboard for Hebrew Wikipedia, designed to track edits, new articles, and trending discussions as they happen.
 
+## Our Own Hosted Website
+expect future ad implementation (This is merely so the project can sustain itself, use adblock if want, if you wish to support than ads away).
+
+
 ## Quick Start
 
 ### Option 1: Docker (Recommended)
