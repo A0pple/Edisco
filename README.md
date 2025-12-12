@@ -13,11 +13,8 @@ At requirements.txt
 *   **Anonymous Filter**: Global toggle to show only anonymous (IP) edits across the entire dashboard.
 *   **Global Time Control**: Switch all columns between "24 Hours" and "7 Days" with a single click.
 
-## Tech Stack
-*   **Backend**: Python, FastAPI, httpx (Async)
-*   **Frontend**: HTML5, CSS3 (Glassmorphism), Vanilla JavaScript
-*   **Data Source**: Wikimedia EventStreams (SSE) & MediaWiki API
-
-## Credits
+## Credits & Tech Stacks
+*   **Contributors**: @appledev7000 (Programming), @ofekmoyal (Docker Container)
 *   **Development**: Google Antigravity (Gemini 3 Pro)
-*   **Language**: Python
+*   **Languages**: Python, JavaScript (Vanilla), CSS3 (Glassmorphism), HTML5
+*   **Data Source**: Wikimedia EventStreams (SSE) & MediaWiki API
