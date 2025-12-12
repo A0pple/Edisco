@@ -3,6 +3,7 @@ Edisco is a real-time monitoring dashboard for Hebrew Wikipedia, designed to tra
 
 ## Our Own Hosted Website
 expect future ad implementation (This is merely so the project can sustain itself, use adblock if want, if you wish to support than ads away).
+https://edisco.themoyals.club
 
 
 ## Quick Start
