@@ -19,5 +19,6 @@ At requirements.txt
 *   **Data Source**: Wikimedia EventStreams (SSE) & MediaWiki API
 
 ## Credits
-*   **Development**: Google Antigravity (Gemini 3 Pro)
-*   **Language**: Python
+*   **Contributors**: @appledev7000 (Programming), @ofekmoyal (Debugging, Docking)
+*   **Used with**: Google Antigravity (Gemini 3 Pro)
+*   **Language**: Python 3.7
