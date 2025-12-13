@@ -16,7 +16,7 @@ class WikiClient:
 
     def __init__(self):
         self.client = httpx.AsyncClient(headers={
-            "User-Agent": "Edisco/1.0 (https://github.com/yourusername/edisco; edisco@example.com)"
+            "User-Agent": "EdiscoBot/1.0 (https://github.com/A0pple/Edisco; contact@edisco.app) based on httpx/0.23.0"
         }, timeout=30.0) # Increased timeout for batch operations
 
     async def get_recent_edits_stream(self) -> AsyncGenerator[Dict, None]:
