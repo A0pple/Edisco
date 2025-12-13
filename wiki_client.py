@@ -160,7 +160,7 @@ class WikiClient:
 
         return results
 
-    async def _fetch_edits_worker(self, start_time, end_time, max_fetch, namespace: int = 0, anon_only: bool = False, props: str = "ids|title|user|timestamp|comment|sizes", user: Optional[str] = None) -> List[Dict]:
+    async def _fetch_edits_worker(self, start_time, end_time, max_fetch, namespace: int = 0, anon_only: bool = False, props: str = "ids|title|user|timestamp|comment|sizes", user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Worker to fetch edits for a specific time range.
         """
@@ -193,6 +193,9 @@ class WikiClient:
             if user:
                 params["rcuser"] = user
 
+            if title:
+                params["rctitle"] = title
+
             try:
                 response = await self.client.get(self.BASE_URL, params=params)
                 response.raise_for_status()
@@ -215,7 +218,7 @@ class WikiClient:
                 
         return edits_chunk
 
-    async def get_recent_edits(self, limit: int = 50, period: Optional[str] = None, max_fetch: int = 500, fetch_images: bool = True, namespace: int = 0, anon_only: bool = False, props: str = "ids|title|user|timestamp|comment|sizes", user: Optional[str] = None) -> List[Dict]:
+    async def get_recent_edits(self, limit: int = 50, period: Optional[str] = None, max_fetch: int = 500, fetch_images: bool = True, namespace: int = 0, anon_only: bool = False, props: str = "ids|title|user|timestamp|comment|sizes", user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches recent edits. 
         Optimized: Uses parallel fetching for '7d' period.
@@ -242,7 +245,7 @@ class WikiClient:
                 t_start = now - timedelta(hours=i*hours_per_chunk)
                 t_end = now - timedelta(hours=(i+1)*hours_per_chunk)
                 
-                tasks.append(self._fetch_edits_worker(t_start, t_end, per_chunk_limit, namespace, anon_only, props, user))
+                tasks.append(self._fetch_edits_worker(t_start, t_end, per_chunk_limit, namespace, anon_only, props, user, title))
             
             results = await asyncio.gather(*tasks)
             for res in results:
@@ -265,7 +268,7 @@ class WikiClient:
                 # Default or custom limit without period
                 pass # end_time remains None
                 
-            all_edits = await self._fetch_edits_worker(None, end_time, max_fetch, namespace, anon_only, props, user)
+            all_edits = await self._fetch_edits_worker(None, end_time, max_fetch, namespace, anon_only, props, user, title)
 
         # Respect the requested limit
         all_edits = all_edits[:limit]
@@ -329,7 +332,7 @@ class WikiClient:
         return decorator
 
     @async_cache(ttl=60)
-    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None) -> List[Dict]:
+    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches top edited articles in the last `period`, ranked by UNIQUE users.
         """
@@ -338,7 +341,7 @@ class WikiClient:
         # Increased limits to ensure better coverage
         max_fetch = 10000 if period == "7d" else 2000
         # Minimal props for aggregation
-        edits = await self.get_recent_edits(limit=max_fetch, period=period, max_fetch=max_fetch, fetch_images=False, anon_only=anon_only, props="ids|title|user|timestamp|comment", user=user)
+        edits = await self.get_recent_edits(limit=max_fetch, period=period, max_fetch=max_fetch, fetch_images=False, anon_only=anon_only, props="ids|title|user|timestamp|comment", user=user, title=title)
         
         from collections import defaultdict
         
@@ -424,7 +427,7 @@ class WikiClient:
         return results
 
     @async_cache(ttl=60)
-    async def get_top_editors(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None) -> List[Dict]:
+    async def get_top_editors(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches top editors in the last `period`, ranked by number of edits.
         """
@@ -432,7 +435,7 @@ class WikiClient:
         # Increased limits significantly to ensure accuracy for "most edits"
         max_fetch = 25000 if period == "7d" else 5000
         # Minimal props for aggregation
-        edits = await self.get_recent_edits(limit=max_fetch, period=period, max_fetch=max_fetch, fetch_images=False, anon_only=anon_only, props="ids|title|user|timestamp", user=user)
+        edits = await self.get_recent_edits(limit=max_fetch, period=period, max_fetch=max_fetch, fetch_images=False, anon_only=anon_only, props="ids|title|user|timestamp", user=user, title=title)
         
         from collections import Counter
         
@@ -455,7 +458,7 @@ class WikiClient:
         return results
 
     @async_cache(ttl=60)
-    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None) -> List[Dict]:
+    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches top talk pages in the last `period`, ranked by UNIQUE users.
         """
@@ -463,7 +466,16 @@ class WikiClient:
         max_fetch = 10000 if period == "7d" else 2000
         # namespace=1 is Talk
         # Minimal props for aggregation
-        edits = await self.get_recent_edits(limit=max_fetch, period=period, max_fetch=max_fetch, fetch_images=False, namespace=1, anon_only=anon_only, props="ids|title|user|timestamp|comment", user=user)
+        # Prepare title if provided: ensure namespace 1 implied or filtered?
+        # get_recent_edits takes 'title'. If we provide 'title', it filters by that.
+        # But we also set namespace=1. So if the user searches for "Israel", we might want "Talk:Israel".
+        # Let's adjust title if it doesn't look like a talk page.
+        search_title = title
+        if title:
+             if not title.startswith("שיחה:") and not title.startswith("Talk:"):
+                  search_title = f"שיחה:{title}"
+        
+        edits = await self.get_recent_edits(limit=max_fetch, period=period, max_fetch=max_fetch, fetch_images=False, namespace=1, anon_only=anon_only, props="ids|title|user|timestamp|comment", user=user, title=search_title)
         
         from collections import defaultdict
         
@@ -567,7 +579,7 @@ class WikiClient:
         return results
 
     @async_cache(ttl=60)
-    async def get_new_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None) -> List[Dict]:
+    async def get_new_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches newly created articles.
         """
@@ -600,6 +612,9 @@ class WikiClient:
             
         if user:
             params["rcuser"] = user
+
+        if title:
+            params["rctitle"] = title
 
         try:
             response = await self.client.get(self.BASE_URL, params=params)
@@ -643,7 +658,7 @@ class WikiClient:
             return []
 
     @async_cache(ttl=300) # Cache for 5 minutes
-    async def get_top_viewed_articles(self, limit: int = 25, period: str = "24h", user: Optional[str] = None) -> List[Dict]:
+    async def get_top_viewed_articles(self, limit: int = 25, period: str = "24h", user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches top viewed articles.
         If period="24h", fetches from yesterday.
@@ -671,7 +686,10 @@ class WikiClient:
 
         # If user is filtered, we find articles they edited recently and check their views
         articles_of_interest = None
-        if user:
+        if title:
+            # Explicit title search
+            articles_of_interest = {title}
+        elif user:
             # Get articles edited by user (ignoring Talk pages usually, but let's check namespace 0)
             user_edits = await self.get_recent_edits(limit=500, period=period, max_fetch=500, fetch_images=False, namespace=0, user=user)
             articles_of_interest = set(edit["title"] for edit in user_edits)

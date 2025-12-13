@@ -55,54 +55,54 @@ async def search(q: str, period: str = "7d"):
     return {"results": results}
 
 @app.get("/api/recent")
-async def get_recent(limit: int = 50, period: str = None, anon_only: bool = False, user: str = None):
+async def get_recent(limit: int = 50, period: str = None, anon_only: bool = False, user: str = None, title: str = None):
     """
     Get recent edits.
     """
-    results = await wiki_client.get_recent_edits(limit=limit, period=period, anon_only=anon_only, user=user)
+    results = await wiki_client.get_recent_edits(limit=limit, period=period, anon_only=anon_only, user=user, title=title)
     return {"results": results}
 
 @app.get("/api/top-edited")
-async def top_edited(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None):
+async def top_edited(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None, title: str = None):
     """
     Get top edited articles.
     Args:
         limit (int): The maximum number of articles to return. Defaults to 25.
         period (str): The time period to consider (e.g., "24h", "7d"). Defaults to "24h".
     """
-    results = await wiki_client.get_top_edited_articles(limit=limit, period=period, anon_only=anon_only, user=user)
+    results = await wiki_client.get_top_edited_articles(limit=limit, period=period, anon_only=anon_only, user=user, title=title)
     return {"results": results}
 
 @app.get("/api/top-editors")
-async def top_editors(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None):
+async def top_editors(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None, title: str = None):
     """
     Get top editors.
     """
-    results = await wiki_client.get_top_editors(limit=limit, period=period, anon_only=anon_only, user=user)
+    results = await wiki_client.get_top_editors(limit=limit, period=period, anon_only=anon_only, user=user, title=title)
     return {"results": results}
 
 @app.get("/api/top-talk-pages")
-async def top_talk_pages(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None):
+async def top_talk_pages(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None, title: str = None):
     """
     Get top talk pages.
     """
-    results = await wiki_client.get_top_talk_pages(limit=limit, period=period, anon_only=anon_only, user=user)
+    results = await wiki_client.get_top_talk_pages(limit=limit, period=period, anon_only=anon_only, user=user, title=title)
     return {"results": results}
 
 @app.get("/api/new-articles")
-async def new_articles(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None):
+async def new_articles(limit: int = 25, period: str = "24h", anon_only: bool = False, user: str = None, title: str = None):
     """
     Get new articles.
     """
-    results = await wiki_client.get_new_articles(limit=limit, period=period, anon_only=anon_only, user=user)
+    results = await wiki_client.get_new_articles(limit=limit, period=period, anon_only=anon_only, user=user, title=title)
     return {"results": results}
 
 @app.get("/api/top-viewed")
-async def top_viewed(limit: int = 25, period: str = "24h", user: str = None):
+async def top_viewed(limit: int = 25, period: str = "24h", user: str = None, title: str = None):
     """
     Get top viewed articles.
     """
-    results = await wiki_client.get_top_viewed_articles(limit=limit, period=period, user=user)
+    results = await wiki_client.get_top_viewed_articles(limit=limit, period=period, user=user, title=title)
     return {"results": results}
 
 @app.get("/api/diff")

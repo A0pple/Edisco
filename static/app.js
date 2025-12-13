@@ -5,6 +5,8 @@ const anonOnlyToggle = document.getElementById('anonOnlyToggle');
 const globalPeriodSelect = document.getElementById('globalPeriod');
 const userFilterInput = document.getElementById('userFilter');
 const refreshBtn = document.getElementById('refreshBtn');
+const filterModeBtn = document.getElementById('filterModeBtn');
+let filterMode = 'user'; // 'user' or 'article'
 
 // Debounce function
 function debounce(func, wait) {
@@ -89,6 +91,28 @@ refreshBtn.addEventListener('click', () => {
     icon.classList.add('fa-spin');
     refreshAll();
     setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+    setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+});
+
+filterModeBtn.addEventListener('click', () => {
+    if (filterMode === 'user') {
+        filterMode = 'article';
+        filterModeBtn.classList.remove('fa-user-tag');
+        filterModeBtn.classList.add('fa-file-lines');
+        filterModeBtn.title = 'לחץ להחלפה לחיפוש משתמש';
+        userFilterInput.placeholder = 'סנן לפי ערך...';
+    } else {
+        filterMode = 'user';
+        filterModeBtn.classList.remove('fa-file-lines');
+        filterModeBtn.classList.add('fa-user-tag');
+        filterModeBtn.title = 'לחץ להחלפה לחיפוש ערך';
+        userFilterInput.placeholder = 'סנן לפי משתמש...';
+    }
+    // Optional: Clear input? Let's keep it, user might want to switch mode for same string (unlikely but possible)
+    // Refresh if there is input
+    if (userFilterInput.value.trim()) {
+        refreshAll();
+    }
 });
 
 
@@ -346,7 +370,11 @@ async function fetchRecentEdits(limit, period, merge = false) {
             url += `&anon_only=true`;
         }
         if (userFilterInput.value.trim()) {
-            url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
         }
 
         const response = await fetch(url);
@@ -406,7 +434,11 @@ async function fetchTopViewedArticles() {
     try {
         let url = `/api/top-viewed?limit=25&period=${period}&_t=${Date.now()}`;
         if (userFilterInput.value.trim()) {
-            url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
         }
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -529,7 +561,11 @@ async function fetchTopEdited() {
     try {
         let url = `/api/top-edited?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
         if (userFilterInput.value.trim()) {
-            url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
         }
         const response = await fetch(url);
         const data = await response.json();
@@ -563,7 +599,11 @@ async function fetchTopEditors() {
     try {
         let url = `/api/top-editors?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
         if (userFilterInput.value.trim()) {
-            url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
         }
         const response = await fetch(url);
         const data = await response.json();
@@ -690,7 +730,11 @@ async function fetchTopTalkPages() {
     try {
         let url = `/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
         if (userFilterInput.value.trim()) {
-            url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
         }
         const response = await fetch(url);
         const data = await response.json();
@@ -815,7 +859,11 @@ async function fetchNewArticles() {
     try {
         let url = `/api/new-articles?limit=${limit}&period=${period}&anon_only=${anonOnlyToggle.checked}`;
         if (userFilterInput.value.trim()) {
-            url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
         }
         const response = await fetch(url);
         const data = await response.json();
