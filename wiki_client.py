@@ -270,7 +270,7 @@ class WikiClient:
                 
             all_edits = await self._fetch_edits_worker(None, end_time, max_fetch, namespace, anon_only, props, user, title)
 
-            all_edits = await self._fetch_edits_worker(None, end_time, max_fetch, namespace, anon_only, props, user, title)
+
 
         # Sorting Logic
         if sort == "size_desc":

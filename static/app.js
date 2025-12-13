@@ -1,12 +1,11 @@
 const feedList = document.getElementById('feedList');
 const topViewedList = document.getElementById('topViewedList');
-const limitSelect = document.getElementById('limitSelect');
-const anonOnlyToggle = document.getElementById('anonOnlyToggle');
 const globalPeriodSelect = document.getElementById('globalPeriod');
 const userFilterInput = document.getElementById('userFilter');
 const refreshBtn = document.getElementById('refreshBtn');
 const filterModeBtn = document.getElementById('filterModeBtn');
-const feedSort = document.getElementById('feedSort');
+const feedControl = document.getElementById('feedControl');
+const limitSelect = null; // Removing legacy reference
 let filterMode = 'user'; // 'user' or 'article'
 
 // Debounce function
@@ -20,8 +19,12 @@ function debounce(func, wait) {
 
 const refreshAll = () => {
     // Refresh all data
-    const limit = parseInt(limitSelect.value) || 50;
-    const period = ['1h', '24h', '7d'].includes(limitSelect.value) ? limitSelect.value : null;
+    // Parse feed control for limit
+    const parts = feedControl.value.split('_');
+    const limit = parseInt(parts[1], 10) || 50;
+
+    // Global period is separate
+    const period = globalPeriodSelect.value;
 
     fetchRecentEdits(limit, period);
     updateTopSection();
@@ -32,8 +35,6 @@ const refreshAll = () => {
 
 globalPeriodSelect.addEventListener('change', () => {
     const period = globalPeriodSelect.value;
-    // Update all individual selectors
-    if (limitSelect.querySelector(`option[value="${period}"]`)) limitSelect.value = period;
     const topPeriod = document.getElementById('topPeriod');
     if (topPeriod) topPeriod.value = period;
     const topTalkPeriod = document.getElementById('topTalkPeriod');
@@ -46,44 +47,9 @@ globalPeriodSelect.addEventListener('change', () => {
     refreshAll();
 });
 
-limitSelect.addEventListener('change', () => {
-    let value = limitSelect.value;
-
-    // Handle Custom
-    if (value === 'custom') {
-        const custom = prompt("הכנס מספר עריכות להצגה (מקסימום 500):", "50");
-        if (custom && !isNaN(custom)) {
-            const num = Math.min(parseInt(custom), 500);
-            // Check if option exists, if not create
-            let opt = Array.from(limitSelect.options).find(o => o.value === String(num));
-            if (!opt) {
-                opt = new Option(`${num} (מותאם)`, num);
-                limitSelect.add(opt, limitSelect.options[limitSelect.options.length - 1]); // Before 'custom' ? No 'custom' is usually last.
-                // Assuming 'custom' is last.
-            }
-            limitSelect.value = String(num);
-            value = String(num);
-        } else {
-            limitSelect.value = "50";
-            value = "50";
-        }
-    }
-
-    const limit = parseInt(value);
-
-    // Immediate truncation if limit is reduced
-    if (!isNaN(limit) && feedList.children.length > limit) {
-        while (feedList.children.length > limit) {
-            feedList.lastChild.remove();
-        }
-    }
-
-    refreshAll();
-});
-
 anonOnlyToggle.addEventListener('change', refreshAll);
 
-feedSort.addEventListener('change', () => {
+feedControl.addEventListener('change', () => {
     refreshAll();
 });
 
@@ -154,8 +120,11 @@ function connectWebSocket() {
     };
 
     socket.onmessage = (event) => {
-        // If sorting is active (not date), ignore live updates to keep list stable
-        if (feedSort.value !== 'date') return;
+        // Parse current control value to check if we are in live mode
+        const controlValue = feedControl.value; // e.g., "live_25", "pos_50"
+        const isLive = controlValue.startsWith('live_');
+
+        if (!isLive) return;
 
         const data = JSON.parse(event.data);
         addEditToFeed(data);
@@ -189,8 +158,8 @@ function addEditToFeed(edit) {
     feedList.insertBefore(card, feedList.firstChild);
 
     // Limit feed based on selection (if not custom)
-    const limit = limitSelect.value === 'custom' ? 500 : parseInt(limitSelect.value);
-    // Only enforce limit if we are in a limit-based mode (numeric value)
+    const parts = feedControl.value.split('_');
+    const limit = parseInt(parts[1], 10);
     // Only enforce limit if we are in a limit-based mode (numeric value)
     if (!isNaN(limit)) {
         while (feedList.children.length > limit) {
@@ -370,7 +339,17 @@ async function fetchRecentEdits(limit, period, merge = false) {
     }
 
     try {
-        let url = `/api/recent?limit=${limit}&sort=${feedSort.value}`;
+        // Parse feed control
+        // control formats: live_25, pos_50, neg_50
+        const parts = feedControl.value.split('_');
+        const mode = parts[0]; // live, pos, neg
+        const limitVal = parseInt(parts[1], 10);
+
+        let sort = 'date';
+        if (mode === 'pos') sort = 'size_desc';
+        if (mode === 'neg') sort = 'size_asc';
+
+        let url = `/api/recent?limit=${limitVal}&sort=${sort}`;
         if (period) {
             url += `&period=${period}`;
         }
