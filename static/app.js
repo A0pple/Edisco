@@ -6,6 +6,7 @@ const globalPeriodSelect = document.getElementById('globalPeriod');
 const userFilterInput = document.getElementById('userFilter');
 const refreshBtn = document.getElementById('refreshBtn');
 const filterModeBtn = document.getElementById('filterModeBtn');
+const feedSort = document.getElementById('feedSort');
 let filterMode = 'user'; // 'user' or 'article'
 
 // Debounce function
@@ -82,6 +83,10 @@ limitSelect.addEventListener('change', () => {
 
 anonOnlyToggle.addEventListener('change', refreshAll);
 
+feedSort.addEventListener('change', () => {
+    refreshAll();
+});
+
 userFilterInput.addEventListener('input', debounce(() => {
     refreshAll();
 }, 500));
@@ -149,6 +154,9 @@ function connectWebSocket() {
     };
 
     socket.onmessage = (event) => {
+        // If sorting is active (not date), ignore live updates to keep list stable
+        if (feedSort.value !== 'date') return;
+
         const data = JSON.parse(event.data);
         addEditToFeed(data);
     };
@@ -341,7 +349,7 @@ function createEditCard(edit) {
                     ${(edit.type === 'new' || (edit.oldlen === 0) || (edit.revision && edit.revision.old === 0)) ? '🆕 ' : ''}${sizeText}
                 </span>
             </div>
-            <a href="${url}" target="_blank" class="edit-title">${title}</a>
+            <span class="edit-title">${title}</span>
             <div class="edit-summary">${comment}</div>
             <div class="edit-meta">
                 <div class="edit-user">
@@ -362,7 +370,7 @@ async function fetchRecentEdits(limit, period, merge = false) {
     }
 
     try {
-        let url = `/api/recent?limit=${limit}`;
+        let url = `/api/recent?limit=${limit}&sort=${feedSort.value}`;
         if (period) {
             url += `&period=${period}`;
         }
@@ -533,10 +541,10 @@ function startAutoRefresh() {
 connectWebSocket();
 // Top Edited Logic
 const topEditedList = document.getElementById('topEditedList');
-const topFilterSelect = document.getElementById('topFilter');
+const topPeriodSelect = document.getElementById('topPeriod');
 const topTypeSelect = document.getElementById('topType');
 
-topFilterSelect.addEventListener('change', () => {
+topPeriodSelect.addEventListener('change', () => {
     updateTopSection();
 });
 
@@ -555,11 +563,11 @@ async function updateTopSection() {
 
 async function fetchTopEdited() {
     const topList = document.getElementById('topEditedList');
-    const [period, sortBy] = document.getElementById('topFilter').value.split('|');
+    const period = document.getElementById('topPeriod').value;
     topList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        let url = `/api/top-edited?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}&sort_by=${sortBy}`;
+        let url = `/api/top-edited?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
         if (userFilterInput.value.trim()) {
             if (filterMode === 'article') {
                 url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
@@ -593,7 +601,7 @@ async function fetchTopEdited() {
 
 async function fetchTopEditors() {
     const topList = document.getElementById('topEditedList');
-    const [period, _] = document.getElementById('topFilter').value.split('|');
+    const period = document.getElementById('topPeriod').value;
     topList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
@@ -717,18 +725,18 @@ setInterval(updateTopSection, 30000);
 
 // Top Talk Pages Logic
 const topTalkList = document.getElementById('topTalkList');
-const topTalkFilterSelect = document.getElementById('topTalkFilter');
+const topTalkPeriodSelect = document.getElementById('topTalkPeriod');
 
-topTalkFilterSelect.addEventListener('change', () => {
+topTalkPeriodSelect.addEventListener('change', () => {
     fetchTopTalkPages();
 });
 
 async function fetchTopTalkPages() {
-    const [period, sortBy] = topTalkFilterSelect.value.split('|');
+    const period = topTalkPeriodSelect.value;
     topTalkList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        let url = `/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}&sort_by=${sortBy}`;
+        let url = `/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
         if (userFilterInput.value.trim()) {
             if (filterMode === 'article') {
                 url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;

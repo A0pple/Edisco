@@ -65,6 +65,11 @@
                 <div class="section-header">
                     <h2><i class="fa-solid fa-satellite-dish"></i> שידור חי</h2>
                     <div class="controls">
+                        <select id="feedSort" class="glass-select">
+                            <option value="date">לפי זמן</option>
+                            <option value="size_desc">תרומה חיובית</option>
+                            <option value="size_asc">תרומה שלילית</option>
+                        </select>
                         <select id="limitSelect" class="glass-select">
                             <optgroup label="כמות עריכות">
                                 <option value="25">25 אחרונים</option>
@@ -95,11 +100,9 @@
                             <option value="articles">ערכים</option>
                             <option value="users">עורכים</option>
                         </select>
-                        <select id="topFilter" class="glass-select search-select" style="margin-left: 0;">
-                            <option value="24h|count">הנערכים ביותר (24 שעות)</option>
-                            <option value="24h|last_updated">המתעדכנים אחרונים (24 שעות)</option>
-                            <option value="7d|count">הנערכים ביותר (7 ימים)</option>
-                            <option value="7d|last_updated">המתעדכנים אחרונים (7 ימים)</option>
+                        <select id="topPeriod" class="glass-select search-select" style="margin-left: 0;">
+                            <option value="24h">24 שעות</option>
+                            <option value="7d">7 ימים</option>
                         </select>
                     </div>
                 </div>
@@ -113,11 +116,9 @@
                 <div class="section-header">
                     <h2><i class="fa-solid fa-comments"></i>מחלוקת</h2>
                     <div class="controls">
-                        <select id="topTalkFilter" class="glass-select search-select">
-                            <option value="24h|count">המתדיינים ביותר (24 שעות)</option>
-                            <option value="24h|last_updated">המתעדכנים אחרונים (24 שעות)</option>
-                            <option value="7d|count">המתדיינים ביותר (7 ימים)</option>
-                            <option value="7d|last_updated">המתעדכנים אחרונים (7 ימים)</option>
+                        <select id="topTalkPeriod" class="glass-select search-select">
+                            <option value="24h">24 שעות</option>
+                            <option value="7d">7 ימים</option>
                         </select>
                     </div>
                 </div>

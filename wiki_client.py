@@ -218,7 +218,7 @@ class WikiClient:
                 
         return edits_chunk
 
-    async def get_recent_edits(self, limit: int = 50, period: Optional[str] = None, max_fetch: int = 500, fetch_images: bool = True, namespace: int = 0, anon_only: bool = False, props: str = "ids|title|user|timestamp|comment|sizes", user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
+    async def get_recent_edits(self, limit: int = 50, period: Optional[str] = None, max_fetch: int = 500, fetch_images: bool = True, namespace: int = 0, anon_only: bool = False, props: str = "ids|title|user|timestamp|comment|sizes", user: Optional[str] = None, title: Optional[str] = None, sort: str = "date") -> List[Dict]:
         """
         Fetches recent edits. 
         Optimized: Uses parallel fetching for '7d' period.
@@ -269,6 +269,22 @@ class WikiClient:
                 pass # end_time remains None
                 
             all_edits = await self._fetch_edits_worker(None, end_time, max_fetch, namespace, anon_only, props, user, title)
+
+            all_edits = await self._fetch_edits_worker(None, end_time, max_fetch, namespace, anon_only, props, user, title)
+
+        # Sorting Logic
+        if sort == "size_desc":
+             # Sort by size difference descending (Biggest Positive)
+             # Diff = newlen - oldlen
+             all_edits.sort(key=lambda x: (x.get("newlen", 0) - x.get("oldlen", 0)), reverse=True)
+        elif sort == "size_asc":
+             # Sort by size difference ascending (Biggest Negative ie most removed)
+             all_edits.sort(key=lambda x: (x.get("newlen", 0) - x.get("oldlen", 0)))
+             # Wait, usually "Biggest Negative" means "Most negative value" (e.g. -5000 is 'bigger' negative than -10).
+             # Ascending sort of (new-old) will put -5000 before -10. Correct.
+        else:
+             # Default date sort (should already be sorted by API but ensure it)
+             all_edits.sort(key=lambda x: x["timestamp"], reverse=True)
 
         # Respect the requested limit
         all_edits = all_edits[:limit]
@@ -332,7 +348,7 @@ class WikiClient:
         return decorator
 
     @async_cache(ttl=60)
-    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None, sort_by: str = "count") -> List[Dict]:
+    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches top edited articles in the last `period`, ranked by UNIQUE users.
         """
@@ -458,7 +474,7 @@ class WikiClient:
         return results
 
     @async_cache(ttl=60)
-    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None, sort_by: str = "count") -> List[Dict]:
+    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
         """
         Fetches top talk pages in the last `period`, ranked by UNIQUE users.
         """
@@ -523,11 +539,8 @@ class WikiClient:
             
             results.append(info)
             
-        # Sort
-        if sort_by == "last_updated":
-             results.sort(key=lambda x: x.get("last_timestamp") or "", reverse=True)
-        else:
-             results.sort(key=lambda x: x["count"], reverse=True)
+        # Sort by count descending
+        results.sort(key=lambda x: x["count"], reverse=True)
         
         # Take top N
         results = results[:limit]
