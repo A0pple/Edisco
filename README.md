@@ -15,6 +15,7 @@ Edisco is a real-time monitoring dashboard for Hebrew Wikipedia, designed to tra
 ## Tech Stack
 
 *   **Contributors**: @appledev7000 (Programming), @ofekmoyal (Backend)
+*   **Development**: Google Antigravity (Gemini 3 Pro)
 *   **Backend**: Python, FastAPI, httpx (Async)
 *   **Frontend**: HTML5, CSS3 (Glassmorphism), Vanilla JavaScript
 *   **Data Source**: Wikimedia EventStreams (SSE) & MediaWiki API
@@ -44,8 +45,3 @@ Edisco is a real-time monitoring dashboard for Hebrew Wikipedia, designed to tra
     ```
 
 5.  Open your browser at `http://localhost:8000`.
-
-## Credits
-
-*   **Development**: Google Antigravity (Gemini 3 Pro)
-*   **Language**: Python
