@@ -46,7 +46,7 @@ Edisco is a real-time monitoring dashboard for Hebrew Wikipedia, designed to tra
 *   **Backend**: Python, FastAPI, httpx (Async)
 *   **Frontend**: HTML5, CSS3 (Glassmorphism), Vanilla JavaScript
 *   **Data Source**: Wikimedia EventStreams (SSE) & MediaWiki API
-*   **Online Testing (1.0.0-alpha)**: https://edisco.themoyals.club/
+*   **Online Preview (1.0.0-alpha)**: https://edisco.themoyals.club/
 
 ## Updates
 ### 1.0.2-alpha (13/12/25)
