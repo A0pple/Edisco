@@ -89,10 +89,8 @@
                 <div class="section-header">
                     <h2><i class="fa-solid fa-chart-bar"></i>פעילות</h2>
                     <div class="controls">
-                        <select id="topType" class="glass-select search-select" style="margin-left: 5px;">
-                            <option value="articles">ערכים</option>
-                            <option value="users">עורכים</option>
-                        </select>
+                        <button id="topTypeBtn" class="glass-btn" style="margin-left: 5px;"
+                            title="מיין לפי זמן עדכון"><i class="fa-solid fa-clock"></i></button>
                         <select id="topPeriod" class="glass-select search-select" style="margin-left: 0;">
                             <option value="24h">24 שעות</option>
                             <option value="7d">7 ימים</option>
@@ -109,6 +107,8 @@
                 <div class="section-header">
                     <h2><i class="fa-solid fa-comments"></i>מחלוקת</h2>
                     <div class="controls">
+                        <button id="topTalkSortBtn" class="glass-btn" title="מיין לפי עדכון אחרון"><i
+                                class="fa-solid fa-clock"></i></button>
                         <select id="topTalkPeriod" class="glass-select search-select">
                             <option value="24h">24 שעות</option>
                             <option value="7d">7 ימים</option>

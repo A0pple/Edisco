@@ -521,23 +521,28 @@ connectWebSocket();
 // Top Edited Logic
 const topEditedList = document.getElementById('topEditedList');
 const topPeriodSelect = document.getElementById('topPeriod');
-const topTypeSelect = document.getElementById('topType');
+const topTypeBtn = document.getElementById('topTypeBtn');
+let topEditedSortMode = 'count'; // 'count' (Most Edited) or 'date' (Last Updated)
 
 topPeriodSelect.addEventListener('change', () => {
     updateTopSection();
 });
 
-topTypeSelect.addEventListener('change', () => {
+topTypeBtn.addEventListener('click', () => {
+    if (topEditedSortMode === 'count') {
+        topEditedSortMode = 'date'; // Switch to Date Sort
+        topTypeBtn.innerHTML = '<i class="fa-solid fa-fire"></i>';
+        topTypeBtn.title = 'מיין לפי כמות עריכות (חזרה לפעילים)';
+    } else {
+        topEditedSortMode = 'count'; // Switch back to Count Sort
+        topTypeBtn.innerHTML = '<i class="fa-solid fa-clock"></i>';
+        topTypeBtn.title = 'מיין לפי זמן עדכון';
+    }
     updateTopSection();
 });
 
 async function updateTopSection() {
-    const type = topTypeSelect.value;
-    if (type === 'articles') {
-        await fetchTopEdited();
-    } else {
-        await fetchTopEditors();
-    }
+    await fetchTopEdited();
 }
 
 async function fetchTopEdited() {
@@ -705,17 +710,33 @@ setInterval(updateTopSection, 30000);
 // Top Talk Pages Logic
 const topTalkList = document.getElementById('topTalkList');
 const topTalkPeriodSelect = document.getElementById('topTalkPeriod');
+const topTalkSortBtn = document.getElementById('topTalkSortBtn');
+let topTalkSortMode = 'count'; // 'count' (Active) or 'date' (Last Updated)
 
 topTalkPeriodSelect.addEventListener('change', () => {
     fetchTopTalkPages();
 });
 
+topTalkSortBtn.addEventListener('click', () => {
+    if (topTalkSortMode === 'count') {
+        topTalkSortMode = 'date';
+        topTalkSortBtn.innerHTML = '<i class="fa-solid fa-fire"></i>';
+        topTalkSortBtn.title = 'מיין לפי פעילות (הכי פעילים)';
+    } else {
+        topTalkSortMode = 'count';
+        topTalkSortBtn.innerHTML = '<i class="fa-solid fa-clock"></i>';
+        topTalkSortBtn.title = 'מיין לפי זמן (עודכנו לאחרונה)';
+    }
+    fetchTopTalkPages();
+});
+
 async function fetchTopTalkPages() {
     const period = topTalkPeriodSelect.value;
+    const sort = topTalkSortMode;
     topTalkList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        let url = `/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
+        let url = `/api/top-talk-pages?limit=25&period=${period}&sort=${sort}&anon_only=${anonOnlyToggle.checked}`;
         if (userFilterInput.value.trim()) {
             if (filterMode === 'article') {
                 url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;

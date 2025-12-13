@@ -348,9 +348,12 @@ class WikiClient:
         return decorator
 
     @async_cache(ttl=60)
-    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
+    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None, sort: str = "count") -> List[Dict]:
         """
-        Fetches top edited articles in the last `period`, ranked by UNIQUE users.
+        Fetches top edited articles in the last `period`.
+        Sorted by:
+        - "count": Unique users/Edit count (default/Most Edited)
+        - "date": Last timestamp (Last Updated)
         """
         # Fetch a large number of recent edits to aggregate
         # We need enough edits to get meaningful data, especially for 7d
@@ -405,8 +408,13 @@ class WikiClient:
 
             results.append(info)
             
-        # Sort by count descending
-        results.sort(key=lambda x: x["count"], reverse=True)
+        # Sort
+        if sort == "date":
+            # Sort by last_timestamp descending
+            results.sort(key=lambda x: x.get("last_timestamp", ""), reverse=True)
+        else:
+            # Default: Sort by count descending (Most Edited)
+            results.sort(key=lambda x: x["count"], reverse=True)
         
         # Take top N
         results = results[:limit]
@@ -474,9 +482,12 @@ class WikiClient:
         return results
 
     @async_cache(ttl=60)
-    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
+    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None, sort: str = "count") -> List[Dict]:
         """
-        Fetches top talk pages in the last `period`, ranked by UNIQUE users.
+        Fetches top talk pages in the last `period`.
+        Sorted by:
+        - "count": Unique users (default/Most Active)
+        - "date": Last timestamp (Last Updated)
         """
         # Fetch a large number of recent edits to aggregate
         max_fetch = 10000 if period == "7d" else 2000
@@ -539,8 +550,13 @@ class WikiClient:
             
             results.append(info)
             
-        # Sort by count descending
-        results.sort(key=lambda x: x["count"], reverse=True)
+        # Sort
+        if sort == "date":
+            # Sort by last_timestamp descending
+            results.sort(key=lambda x: x.get("last_timestamp", ""), reverse=True)
+        else:
+            # Default: Sort by count descending (Most Active)
+            results.sort(key=lambda x: x["count"], reverse=True)
         
         # Take top N
         results = results[:limit]
