@@ -332,7 +332,7 @@ class WikiClient:
         return decorator
 
     @async_cache(ttl=60)
-    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
+    async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None, sort_by: str = "count") -> List[Dict]:
         """
         Fetches top edited articles in the last `period`, ranked by UNIQUE users.
         """
@@ -458,7 +458,7 @@ class WikiClient:
         return results
 
     @async_cache(ttl=60)
-    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
+    async def get_top_talk_pages(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None, sort_by: str = "count") -> List[Dict]:
         """
         Fetches top talk pages in the last `period`, ranked by UNIQUE users.
         """
@@ -523,8 +523,11 @@ class WikiClient:
             
             results.append(info)
             
-        # Sort by count descending
-        results.sort(key=lambda x: x["count"], reverse=True)
+        # Sort
+        if sort_by == "last_updated":
+             results.sort(key=lambda x: x.get("last_timestamp") or "", reverse=True)
+        else:
+             results.sort(key=lambda x: x["count"], reverse=True)
         
         # Take top N
         results = results[:limit]

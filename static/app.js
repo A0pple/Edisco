@@ -534,9 +534,14 @@ connectWebSocket();
 // Top Edited Logic
 const topEditedList = document.getElementById('topEditedList');
 const topPeriodSelect = document.getElementById('topPeriod');
+const topSortSelect = document.getElementById('topSort');
 const topTypeSelect = document.getElementById('topType');
 
 topPeriodSelect.addEventListener('change', () => {
+    updateTopSection();
+});
+
+topSortSelect.addEventListener('change', () => {
     updateTopSection();
 });
 
@@ -556,10 +561,11 @@ async function updateTopSection() {
 async function fetchTopEdited() {
     const topList = document.getElementById('topEditedList');
     const period = document.getElementById('topPeriod').value;
+    const sortBy = document.getElementById('topSort').value;
     topList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        let url = `/api/top-edited?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
+        let url = `/api/top-edited?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}&sort_by=${sortBy}`;
         if (userFilterInput.value.trim()) {
             if (filterMode === 'article') {
                 url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
@@ -718,17 +724,23 @@ setInterval(updateTopSection, 30000);
 // Top Talk Pages Logic
 const topTalkList = document.getElementById('topTalkList');
 const topTalkPeriodSelect = document.getElementById('topTalkPeriod');
+const topTalkSortSelect = document.getElementById('topTalkSort');
 
 topTalkPeriodSelect.addEventListener('change', () => {
     fetchTopTalkPages();
 });
 
+topTalkSortSelect.addEventListener('change', () => {
+    fetchTopTalkPages();
+});
+
 async function fetchTopTalkPages() {
     const period = topTalkPeriodSelect.value;
+    const sortBy = topTalkSortSelect.value;
     topTalkList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        let url = `/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
+        let url = `/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}&sort_by=${sortBy}`;
         if (userFilterInput.value.trim()) {
             if (filterMode === 'article') {
                 url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
