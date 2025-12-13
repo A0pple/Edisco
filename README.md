@@ -49,12 +49,4 @@ Edisco is a real-time monitoring dashboard for Hebrew Wikipedia, designed to tra
 *   **Online Preview (1.0.0-alpha)**: https://edisco.themoyals.club/
 
 ## Updates
-### 1.0.2-alpha (13/12/25)
-*   **User Search**: An option to see the edits and general information of a specific Wikipedia account.
-*   **GUI "Diffedits"**: A GUI pop-up screen that lets you see the specific difference of an edit in the live feed.
-*   **Latest Edit**: An option to see who have done the last edit in Dispute & Activity area and how long ago it was commented.
-*   **Wikidata Caption**: Wikidata captaion in corresponding articles in the "Top Viewed" section.
-*   **Refresh Button**: A refresh button to see the new latest information on the panel.
-*   **Active Paragraph**: Showing the most actively edited paragraph at the "Activity Area".
-#### Fixes
-*   Live Feed - number of edits fix
+[Release notes here](https://github.com/A0pple/Edisco/tags)
