@@ -533,15 +533,10 @@ function startAutoRefresh() {
 connectWebSocket();
 // Top Edited Logic
 const topEditedList = document.getElementById('topEditedList');
-const topPeriodSelect = document.getElementById('topPeriod');
-const topSortSelect = document.getElementById('topSort');
+const topFilterSelect = document.getElementById('topFilter');
 const topTypeSelect = document.getElementById('topType');
 
-topPeriodSelect.addEventListener('change', () => {
-    updateTopSection();
-});
-
-topSortSelect.addEventListener('change', () => {
+topFilterSelect.addEventListener('change', () => {
     updateTopSection();
 });
 
@@ -560,8 +555,7 @@ async function updateTopSection() {
 
 async function fetchTopEdited() {
     const topList = document.getElementById('topEditedList');
-    const period = document.getElementById('topPeriod').value;
-    const sortBy = document.getElementById('topSort').value;
+    const [period, sortBy] = document.getElementById('topFilter').value.split('|');
     topList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
@@ -599,7 +593,7 @@ async function fetchTopEdited() {
 
 async function fetchTopEditors() {
     const topList = document.getElementById('topEditedList');
-    const period = document.getElementById('topPeriod').value;
+    const [period, _] = document.getElementById('topFilter').value.split('|');
     topList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
@@ -723,20 +717,14 @@ setInterval(updateTopSection, 30000);
 
 // Top Talk Pages Logic
 const topTalkList = document.getElementById('topTalkList');
-const topTalkPeriodSelect = document.getElementById('topTalkPeriod');
-const topTalkSortSelect = document.getElementById('topTalkSort');
+const topTalkFilterSelect = document.getElementById('topTalkFilter');
 
-topTalkPeriodSelect.addEventListener('change', () => {
-    fetchTopTalkPages();
-});
-
-topTalkSortSelect.addEventListener('change', () => {
+topTalkFilterSelect.addEventListener('change', () => {
     fetchTopTalkPages();
 });
 
 async function fetchTopTalkPages() {
-    const period = topTalkPeriodSelect.value;
-    const sortBy = topTalkSortSelect.value;
+    const [period, sortBy] = topTalkFilterSelect.value.split('|');
     topTalkList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
