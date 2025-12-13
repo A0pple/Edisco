@@ -3,35 +3,21 @@ const topViewedList = document.getElementById('topViewedList');
 const limitSelect = document.getElementById('limitSelect');
 const anonOnlyToggle = document.getElementById('anonOnlyToggle');
 const globalPeriodSelect = document.getElementById('globalPeriod');
+const userFilterInput = document.getElementById('userFilter');
+const refreshBtn = document.getElementById('refreshBtn');
+const filterModeBtn = document.getElementById('filterModeBtn');
+let filterMode = 'user'; // 'user' or 'article'
 
-globalPeriodSelect.addEventListener('change', () => {
-    const period = globalPeriodSelect.value;
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
 
-    // Update all individual selectors
-    if (limitSelect.querySelector(`option[value="${period}"]`)) limitSelect.value = period;
-
-    const topPeriod = document.getElementById('topPeriod');
-    if (topPeriod) topPeriod.value = period;
-
-    const topTalkPeriod = document.getElementById('topTalkPeriod');
-    if (topTalkPeriod) topTalkPeriod.value = period;
-
-    const newPeriod = document.getElementById('newPeriod');
-    if (newPeriod) newPeriod.value = period;
-
-    const topViewedPeriod = document.getElementById('topViewedPeriod');
-    if (topViewedPeriod) topViewedPeriod.value = period;
-
-    // Trigger refresh
-    const limit = parseInt(limitSelect.value) || 50;
-    fetchRecentEdits(limit, period);
-    updateTopSection();
-    fetchNewArticles();
-    fetchTopViewedArticles();
-    fetchTopTalkPages();
-});
-
-anonOnlyToggle.addEventListener('change', () => {
+const refreshAll = () => {
     // Refresh all data
     const limit = parseInt(limitSelect.value) || 50;
     const period = ['1h', '24h', '7d'].includes(limitSelect.value) ? limitSelect.value : null;
@@ -39,9 +25,96 @@ anonOnlyToggle.addEventListener('change', () => {
     fetchRecentEdits(limit, period);
     updateTopSection();
     fetchNewArticles();
-    fetchTopViewedArticles(); // Top viewed usually doesn't have anon filter in API but good to refresh
+    fetchTopViewedArticles();
     fetchTopTalkPages();
+};
+
+globalPeriodSelect.addEventListener('change', () => {
+    const period = globalPeriodSelect.value;
+    // Update all individual selectors
+    if (limitSelect.querySelector(`option[value="${period}"]`)) limitSelect.value = period;
+    const topPeriod = document.getElementById('topPeriod');
+    if (topPeriod) topPeriod.value = period;
+    const topTalkPeriod = document.getElementById('topTalkPeriod');
+    if (topTalkPeriod) topTalkPeriod.value = period;
+    const newPeriod = document.getElementById('newPeriod');
+    if (newPeriod) newPeriod.value = period;
+    const topViewedPeriod = document.getElementById('topViewedPeriod');
+    if (topViewedPeriod) topViewedPeriod.value = period;
+
+    refreshAll();
 });
+
+limitSelect.addEventListener('change', () => {
+    let value = limitSelect.value;
+
+    // Handle Custom
+    if (value === 'custom') {
+        const custom = prompt("הכנס מספר עריכות להצגה (מקסימום 500):", "50");
+        if (custom && !isNaN(custom)) {
+            const num = Math.min(parseInt(custom), 500);
+            // Check if option exists, if not create
+            let opt = Array.from(limitSelect.options).find(o => o.value === String(num));
+            if (!opt) {
+                opt = new Option(`${num} (מותאם)`, num);
+                limitSelect.add(opt, limitSelect.options[limitSelect.options.length - 1]); // Before 'custom' ? No 'custom' is usually last.
+                // Assuming 'custom' is last.
+            }
+            limitSelect.value = String(num);
+            value = String(num);
+        } else {
+            limitSelect.value = "50";
+            value = "50";
+        }
+    }
+
+    const limit = parseInt(value);
+
+    // Immediate truncation if limit is reduced
+    if (!isNaN(limit) && feedList.children.length > limit) {
+        while (feedList.children.length > limit) {
+            feedList.lastChild.remove();
+        }
+    }
+
+    refreshAll();
+});
+
+anonOnlyToggle.addEventListener('change', refreshAll);
+
+userFilterInput.addEventListener('input', debounce(() => {
+    refreshAll();
+}, 500));
+
+refreshBtn.addEventListener('click', () => {
+    const icon = refreshBtn.querySelector('i');
+    icon.classList.add('fa-spin');
+    refreshAll();
+    setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+    setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+});
+
+filterModeBtn.addEventListener('click', () => {
+    if (filterMode === 'user') {
+        filterMode = 'article';
+        filterModeBtn.classList.remove('fa-user-tag');
+        filterModeBtn.classList.add('fa-file-lines');
+        filterModeBtn.title = 'לחץ להחלפה לחיפוש משתמש';
+        userFilterInput.placeholder = 'סנן לפי ערך...';
+    } else {
+        filterMode = 'user';
+        filterModeBtn.classList.remove('fa-file-lines');
+        filterModeBtn.classList.add('fa-user-tag');
+        filterModeBtn.title = 'לחץ להחלפה לחיפוש ערך';
+        userFilterInput.placeholder = 'סנן לפי משתמש...';
+    }
+    // Optional: Clear input? Let's keep it, user might want to switch mode for same string (unlikely but possible)
+    // Refresh if there is input
+    if (userFilterInput.value.trim()) {
+        refreshAll();
+    }
+});
+
 
 // Error Handling
 function showError(message) {
@@ -104,21 +177,133 @@ function addEditToFeed(edit) {
     }
 
     const card = createEditCard(edit);
+
     feedList.insertBefore(card, feedList.firstChild);
 
     // Limit feed based on selection (if not custom)
     const limit = limitSelect.value === 'custom' ? 500 : parseInt(limitSelect.value);
     // Only enforce limit if we are in a limit-based mode (numeric value)
-    if (!isNaN(limit) && feedList.children.length > limit) {
-        feedList.lastChild.remove();
+    // Only enforce limit if we are in a limit-based mode (numeric value)
+    if (!isNaN(limit)) {
+        while (feedList.children.length > limit) {
+            feedList.lastChild.remove();
+        }
     }
 }
+
+// Modal Logic
+const backdrop = document.createElement('div');
+backdrop.id = 'modal-backdrop';
+document.body.appendChild(backdrop);
+
+const modal = document.createElement('div');
+modal.id = 'edit-modal';
+document.body.appendChild(modal);
+
+function closeModal() {
+    modal.classList.remove('visible');
+    backdrop.classList.remove('visible');
+    setTimeout(() => {
+        modal.innerHTML = ''; // Clear content
+    }, 300);
+}
+
+backdrop.addEventListener('click', closeModal);
+
+async function openEditModal(edit) {
+    // Populate Initial Content
+    const time = new Date(edit.timestamp * 1000 || edit.timestamp).toLocaleTimeString('he-IL');
+    const date = new Date(edit.timestamp * 1000 || edit.timestamp).toLocaleDateString('he-IL');
+    const user = edit.user || 'אנונימי';
+    const title = edit.title || 'ללא כותרת';
+    const summary = edit.comment || 'אין תקציר עריכה';
+    const rcid = edit.rcid || edit.id;
+
+    // Links
+    const diffUrl = edit.revid ? `https://he.wikipedia.org/w/index.php?diff=${edit.revid}` : `https://he.wikipedia.org/wiki/${title}`;
+    const isAnon = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(user) || /:/.test(user); // Simple IP check
+    const userUrl = `https://he.wikipedia.org/wiki/${isAnon ? 'Special:Contributions' : 'User'}:${user}`;
+
+    // Construct Initial HTML
+    modal.innerHTML = `
+        <div class="modal-header">
+            <div class="modal-info">
+                <a href="https://he.wikipedia.org/wiki/${title}" target="_blank" class="modal-title">${title}</a>
+                <div class="modal-meta">
+                    <span><i class="fa-solid fa-user"></i> <a href="${userUrl}" target="_blank" style="color: inherit; text-decoration: none;">${user}</a></span>
+                    <span><i class="fa-solid fa-clock"></i> ${date} ${time}</span>
+                </div>
+                <div class="modal-summary">"${summary}"</div>
+                <div class="modal-actions">
+                    <a href="${diffUrl}" target="_blank" class="action-btn primary">
+                        <i class="fa-brands fa-wikipedia-w"></i> צפה בויקיפדיה
+                    </a>
+                    <a href="${userUrl}" target="_blank" class="action-btn secondary">
+                        <i class="fa-solid fa-user"></i> דף משתמש
+                    </a>
+                </div>
+            </div>
+            <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="diff-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <span>טוען שינויים...</span>
+            </div>
+        </div>
+    `;
+
+    // Show Modal
+    backdrop.classList.add('visible');
+    modal.classList.add('visible');
+
+    // Fetch Diff
+    if (edit.revid) {
+        try {
+            const response = await fetch(`/api/diff?revid=${edit.revid}`);
+            const data = await response.json();
+            const modalBody = modal.querySelector('.modal-body');
+
+            if (!data.diff) {
+                modalBody.innerHTML = '<div style="text-align:center; padding: 2rem; color: #cbd5e1;">אין שינויים להצגה או לא ניתן לטעון את ההבדלים.</div>';
+                return;
+            }
+
+            modalBody.innerHTML = `
+                <div class="diff-content">
+                    <table class="diff">
+                        ${data.diff}
+                    </table>
+                </div>
+            `;
+        } catch (e) {
+            console.error(e);
+            const modalBody = modal.querySelector('.modal-body');
+            modalBody.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--danger-color);">שגיאה בטעינת הנתונים.</div>';
+        }
+    } else {
+        const modalBody = modal.querySelector('.modal-body');
+        modalBody.innerHTML = '<div style="text-align:center; padding: 2rem; color: #cbd5e1;">זוהי יצירת דף חדש או שאין מידע על שינויים.</div>';
+    }
+}
+
+// Make globally available for button
+window.closeModal = closeModal;
+
 
 function createEditCard(edit) {
     const div = document.createElement('div');
     div.className = 'edit-card'; // Removed glass-panel to avoid height: 100%
     const rcid = edit.rcid || edit.id;
     div.dataset.rcid = rcid; // Track ID
+
+    // Click Listener for Modal
+    div.style.cursor = 'pointer';
+    div.addEventListener('click', (e) => {
+        // Did we click a link?
+        if (e.target.closest('a')) return;
+        openEditModal(edit);
+    });
 
     // Handle size diff from stream (length.new/old) or API (newlen/oldlen)
     const sizeDiff = (edit.length ? (edit.length.new || 0) - (edit.length.old || 0) : (edit.newlen || 0) - (edit.oldlen || 0));
@@ -140,6 +325,7 @@ function createEditCard(edit) {
         url = `https://he.wikipedia.org/w/index.php?diff=${edit.revid}`;
     }
 
+
     let imageHtml = '';
     if (edit.thumbnail) {
         imageHtml = `<img src="${edit.thumbnail}" class="edit-image" alt="Article Image">`;
@@ -151,7 +337,9 @@ function createEditCard(edit) {
         <div class="edit-content">
             <div class="edit-header">
                 <span>${new Date(edit.timestamp * 1000 || edit.timestamp).toLocaleTimeString('he-IL')}</span>
-                <span class="diff-size ${sizeClass}">${sizeText}</span>
+                <span class="diff-size ${sizeClass}">
+                    ${(edit.type === 'new' || (edit.oldlen === 0) || (edit.revision && edit.revision.old === 0)) ? '🆕 ' : ''}${sizeText}
+                </span>
             </div>
             <a href="${url}" target="_blank" class="edit-title">${title}</a>
             <div class="edit-summary">${comment}</div>
@@ -166,27 +354,7 @@ function createEditCard(edit) {
 }
 
 // Recent Edits Logic
-limitSelect.addEventListener('change', async () => {
-    let value = limitSelect.value;
-    let limit = 50;
-    let period = null;
 
-    if (value === 'custom') {
-        const custom = prompt("הכנס מספר עריכות להצגה (מקסימום 500):", "50");
-        if (custom && !isNaN(custom)) {
-            limit = Math.min(parseInt(custom), 500);
-        } else {
-            limitSelect.value = "50"; // Reset
-            return;
-        }
-    } else if (['1h', '24h', '7d'].includes(value)) {
-        period = value;
-    } else {
-        limit = parseInt(value);
-    }
-
-    await fetchRecentEdits(limit, period);
-});
 
 async function fetchRecentEdits(limit, period, merge = false) {
     if (!merge) {
@@ -200,6 +368,13 @@ async function fetchRecentEdits(limit, period, merge = false) {
         }
         if (anonOnlyToggle.checked) {
             url += `&anon_only=true`;
+        }
+        if (userFilterInput.value.trim()) {
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
         }
 
         const response = await fetch(url);
@@ -257,7 +432,15 @@ async function fetchTopViewedArticles() {
     const period = topViewedPeriodSelect.value;
     topViewedList.innerHTML = '<div class="empty-state">טוען...</div>';
     try {
-        const response = await fetch(`/api/top-viewed?limit=25&period=${period}&_t=${Date.now()}`);
+        let url = `/api/top-viewed?limit=25&period=${period}&_t=${Date.now()}`;
+        if (userFilterInput.value.trim()) {
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
+        }
+        const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
@@ -306,6 +489,7 @@ function createTopViewedCard(article) {
                 <span class="top-rank-badge" style="font-size: 0.8rem; color: var(--success-color); background: rgba(74, 222, 128, 0.1); padding: 1px 6px; border-radius: 4px;">#${article.rank}</span>
             </div>
             <a href="https://he.wikipedia.org/wiki/${article.title}" target="_blank" class="edit-title">${article.title}</a>
+            ${article.description ? `<div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 4px;">${article.description}</div>` : ''}
             <div class="edit-summary">
                 <i class="fa-solid fa-eye"></i> ${article.views.toLocaleString()} צפיות
             </div>
@@ -375,7 +559,15 @@ async function fetchTopEdited() {
     topList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        const response = await fetch(`/api/top-edited?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`);
+        let url = `/api/top-edited?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
+        if (userFilterInput.value.trim()) {
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
+        }
+        const response = await fetch(url);
         const data = await response.json();
 
         if (data.results.length === 0) {
@@ -405,7 +597,15 @@ async function fetchTopEditors() {
     topList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        const response = await fetch(`/api/top-editors?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`);
+        let url = `/api/top-editors?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
+        if (userFilterInput.value.trim()) {
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
+        }
+        const response = await fetch(url);
         const data = await response.json();
 
         if (data.results.length === 0) {
@@ -440,6 +640,34 @@ function createTopArticleCard(article, rank) {
         imageHtml = `<div class="edit-image" style="background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-weight: bold;">${rank}</div>`;
     }
 
+    // Calculate time ago
+    let lastEditHtml = '';
+    if (article.last_timestamp) {
+        const now = new Date();
+        const editDate = new Date(article.last_timestamp);
+        const diffMs = now - editDate;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        let timeAgo = '';
+        if (diffMins < 1) {
+            timeAgo = 'כעת';
+        } else if (diffMins < 60) {
+            timeAgo = `לפני ${diffMins} דקות`;
+        } else if (diffMins < 1440) {
+            const hours = Math.floor(diffMins / 60);
+            timeAgo = hours === 2 ? 'לפני שעתיים' : `לפני ${hours} שעות`;
+        } else {
+            const days = Math.floor(diffMins / 1440);
+            timeAgo = days === 2 ? 'לפני יומיים' : `לפני ${days} ימים`;
+        }
+
+        console.log('Article last_user:', article.last_user, 'Type:', typeof article.last_user);
+        const rawUser = article.last_user || '';
+        const isIp = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(rawUser.trim());
+        const displayUser = (!rawUser.trim() || isIp) ? 'אנונימי' : rawUser.trim();
+        lastEditHtml = `<div class="edit-summary"><i class="fa-solid fa-pen"></i> ${timeAgo} על ידי <strong>${displayUser}</strong></div>`;
+    }
+
     div.innerHTML = `
         ${imageHtml}
         <div class="edit-content">
@@ -447,9 +675,11 @@ function createTopArticleCard(article, rank) {
                 <span class="top-rank-badge" style="font-size: 0.8rem; color: var(--success-color); background: rgba(74, 222, 128, 0.1); padding: 1px 6px; border-radius: 4px;">#${rank}</span>
             </div>
             <a href="https://he.wikipedia.org/wiki/${article.title}" target="_blank" class="edit-title">${article.title}</a>
+            ${article.active_section ? `<div class="active-discussion" style="font-size: 0.85em; color: var(--text-muted); margin-top: 2px; font-style: italic;"><i class="fa-solid fa-paragraph" style="font-size: 0.8em;"></i> ${article.active_section}</div>` : ''}
             <div class="edit-summary">
                 <i class="fa-solid fa-users"></i> ${article.count} עורכים שונים
             </div>
+            ${lastEditHtml}
         </div>
     `;
     return div;
@@ -498,7 +728,15 @@ async function fetchTopTalkPages() {
     topTalkList.innerHTML = '<div class="empty-state">טוען...</div>';
 
     try {
-        const response = await fetch(`/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`);
+        let url = `/api/top-talk-pages?limit=25&period=${period}&anon_only=${anonOnlyToggle.checked}`;
+        if (userFilterInput.value.trim()) {
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
+        }
+        const response = await fetch(url);
         const data = await response.json();
 
         if (data.results.length === 0) {
@@ -532,16 +770,68 @@ function createTopTalkCard(article, rank) {
         imageHtml = `<div class="edit-image" style="background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-weight: bold;">${rank}</div>`;
     }
 
+    let fireIcon = '';
+    if (article.count > 10) {
+        fireIcon = `<i class="fa-solid fa-fire fire-icon" title="ערך חם (מעל 10 עורכים)"></i>`;
+    }
+
+    let discussionHtml = '';
+    if (article.active_discussion) {
+        let text = article.active_discussion;
+        if (text.includes('שחזור')) {
+            text = '<strong>דיון שחזור</strong>';
+        } else if (text.includes('חשיבות')) {
+            text = '<strong>דיון חשיבות</strong>';
+        } else if (text.includes('איחוד')) {
+            text = '<strong>דיון איחוד</strong>';
+        } else if (text.includes('שם')) {
+            text = '<strong>שינוי שם</strong>';
+        }
+        discussionHtml = `<div class="active-discussion" style="font-size: 0.85em; color: var(--text-muted); margin-top: 2px;">${text}</div>`;
+    }
+
+    // Calculate time ago
+    let lastEditHtml = '';
+    if (article.last_timestamp) {
+        const now = new Date();
+        const editDate = new Date(article.last_timestamp);
+        const diffMs = now - editDate;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        let timeAgo = '';
+        if (diffMins < 1) {
+            timeAgo = 'כעת';
+        } else if (diffMins < 60) {
+            timeAgo = `לפני ${diffMins} דקות`;
+        } else if (diffMins < 1440) {
+            const hours = Math.floor(diffMins / 60);
+            timeAgo = hours === 2 ? 'לפני שעתיים' : `לפני ${hours} שעות`;
+        } else {
+            const days = Math.floor(diffMins / 1440);
+            timeAgo = days === 2 ? 'לפני יומיים' : `לפני ${days} ימים`;
+        }
+
+        const rawUser = article.last_user || '';
+        const isIp = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(rawUser.trim());
+        const displayUser = (!rawUser.trim() || isIp) ? 'אנונימי' : rawUser.trim();
+        lastEditHtml = `<div class="edit-summary"><i class="fa-solid fa-comment"></i> ${timeAgo} על ידי <strong>${displayUser}</strong></div>`;
+    }
+
     div.innerHTML = `
         ${imageHtml}
         <div class="edit-content">
             <div class="edit-header">
-                <span class="top-rank-badge" style="font-size: 0.8rem; color: var(--success-color); background: rgba(74, 222, 128, 0.1); padding: 1px 6px; border-radius: 4px;">#${rank}</span>
+                <div>
+                    <span class="top-rank-badge" style="font-size: 0.8rem; color: var(--success-color); background: rgba(74, 222, 128, 0.1); padding: 1px 6px; border-radius: 4px;">#${rank}</span>
+                    ${fireIcon}
+                </div>
             </div>
             <a href="https://he.wikipedia.org/wiki/${article.title}" target="_blank" class="edit-title">${article.title}</a>
+            ${discussionHtml}
             <div class="edit-summary">
                 <i class="fa-solid fa-users"></i> ${article.count} עורכים שונים
             </div>
+            ${lastEditHtml}
         </div>
     `;
     return div;
@@ -567,7 +857,15 @@ async function fetchNewArticles() {
     const limit = period === '7d' ? 100 : 25;
 
     try {
-        const response = await fetch(`/api/new-articles?limit=${limit}&period=${period}&anon_only=${anonOnlyToggle.checked}`);
+        let url = `/api/new-articles?limit=${limit}&period=${period}&anon_only=${anonOnlyToggle.checked}`;
+        if (userFilterInput.value.trim()) {
+            if (filterMode === 'article') {
+                url += `&title=${encodeURIComponent(userFilterInput.value.trim())}`;
+            } else {
+                url += `&user=${encodeURIComponent(userFilterInput.value.trim())}`;
+            }
+        }
+        const response = await fetch(url);
         const data = await response.json();
 
         if (data.results.length === 0) {

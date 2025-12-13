@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edisco - ויקיפדיה בזמן אמת</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/tooltip.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -27,9 +28,19 @@
                 <i class="fa-solid fa-bolt"></i>
                 <h1>Edisco</h1>
             </div>
-            <p class="subtitle">ניטור עריכות ויקיפדיה בזמן אמת</p>
+            <p class="subtitle" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span class="live-indicator"></span>
+                ניטור עריכות ויקיפדיה בזמן אמת
+            </p>
             <div class="global-controls"
-                style="margin-top: 1rem; display: flex; justify-content: center; gap: 1rem; align-items: center;">
+                style="margin-top: 1rem; display: flex; justify-content: center; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div class="search-bar" style="background: rgba(30, 41, 59, 0.5); padding: 0.2rem 1rem;">
+                    <i id="filterModeBtn" class="fa-solid fa-user-tag"
+                        style="padding: 0.5rem; color: var(--accent-color); cursor: pointer;"
+                        title="לחץ להחלפה בין חיפוש משתמש לחיפוש ערך"></i>
+                    <input type="text" id="userFilter" placeholder="סנן לפי משתמש..."
+                        style="color: white; border: none; background: transparent; outline: none; font-family: 'Heebo';">
+                </div>
                 <select id="globalPeriod" class="glass-select search-select"
                     style="background: rgba(30, 41, 59, 0.5); color: white;">
                     <option value="24h">24 שעות</option>
@@ -41,6 +52,8 @@
                     <span class="slider"></span>
                     <span class="label-text"><i class="fa-solid fa-user-secret"></i> הצג עריכות אנונימיות בלבד</span>
                 </label>
+                <button id="refreshBtn" class="refresh-btn" title="רענן נתונים"><i
+                        class="fa-solid fa-arrows-rotate"></i></button>
             </div>
         </header>
 
@@ -66,7 +79,6 @@
                                 <option value="24h">24 שעות אחרונות</option>
                             </optgroup>
                         </select>
-                        <span class="live-indicator"></span>
                     </div>
                 </div>
                 <div id="feedList" class="feed-list">

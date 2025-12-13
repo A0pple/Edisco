@@ -536,6 +536,38 @@ header {
     background: rgba(255, 255, 255, 0.05);
 }
 
+/* Refresh Button */
+.refresh-btn {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    /* Circle */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.refresh-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    /* Accent tint */
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    transform: rotate(180deg) scale(1.05);
+}
+
+.refresh-btn:active {
+    transform: scale(0.95) rotate(180deg);
+}
+
 .top-rank {
     font-size: 1.2rem;
     font-weight: bold;
@@ -856,4 +888,26 @@ header {
     background: rgba(74, 222, 128, 0.1);
     padding: 1px 4px;
     border-radius: 4px;
+}
+
+/* Fire Icon Animation */
+.fire-icon {
+    color: #ff5722;
+    margin-right: 6px;
+    animation: burn 1.5s infinite alternate;
+    filter: drop-shadow(0 0 2px rgba(255, 87, 34, 0.5));
+}
+
+@keyframes burn {
+    0% {
+        transform: scale(1);
+        opacity: 0.9;
+        text-shadow: 0 0 4px #ff5722;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 1;
+        text-shadow: 0 0 10px #ff9800, 0 0 20px #ff5722;
+    }
 }
