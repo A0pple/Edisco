@@ -219,8 +219,11 @@ async function openEditModal(edit) {
     const summary = edit.comment || 'אין תקציר עריכה';
     const rcid = edit.rcid || edit.id;
 
+    // Get revision ID: could come from API (revid) or WebSocket stream (revision.new)
+    const revid = edit.revid || (edit.revision ? edit.revision.new : null);
+    
     // Links
-    const diffUrl = edit.revid ? `https://he.wikipedia.org/w/index.php?diff=${edit.revid}` : `https://he.wikipedia.org/wiki/${title}`;
+    const diffUrl = revid ? `https://he.wikipedia.org/w/index.php?diff=${revid}` : `https://he.wikipedia.org/wiki/${title}`;
     const isAnon = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(user) || /:/.test(user); // Simple IP check
     const userUrl = `https://he.wikipedia.org/wiki/${isAnon ? 'Special:Contributions' : 'User'}:${user}`;
 
@@ -257,10 +260,13 @@ async function openEditModal(edit) {
     backdrop.classList.add('visible');
     modal.classList.add('visible');
 
-    // Fetch Diff
-    if (edit.revid) {
+    // Fetch Diff - use revid from API or revision.new from stream
+    if (revid) {
         try {
-            const response = await fetch(`/api/diff?revid=${edit.revid}`);
+            const response = await fetch(`/api/diff?revid=${revid}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
             const data = await response.json();
             const modalBody = modal.querySelector('.modal-body');
 
@@ -277,7 +283,7 @@ async function openEditModal(edit) {
                 </div>
             `;
         } catch (e) {
-            console.error(e);
+            console.error('Error fetching diff:', e);
             const modalBody = modal.querySelector('.modal-body');
             modalBody.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--danger-color);">שגיאה בטעינת הנתונים.</div>';
         }

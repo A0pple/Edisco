@@ -5,10 +5,37 @@ import logging
 import time
 import re
 from typing import List, Dict, Optional, AsyncGenerator
+from functools import wraps
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Global cache for async methods (created once at module load)
+_method_cache = {}
+
+def async_cache(ttl: int = 30):
+    """
+    Async cache decorator using module-level cache.
+    Cache key includes method name and ALL parameters (including user/title filters).
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(self, *args, **kwargs):
+            # Create unique key: (method_name, args, sorted_kwargs)
+            cache_key = (func.__name__, args, tuple(sorted(kwargs.items())))
+            
+            now = time.time()
+            if cache_key in _method_cache:
+                result, timestamp = _method_cache[cache_key]
+                if now - timestamp < ttl:
+                    return result
+            
+            result = await func(self, *args, **kwargs)
+            _method_cache[cache_key] = (result, now)
+            return result
+        return wrapper
+    return decorator
 
 class WikiClient:
     BASE_URL = "https://he.wikipedia.org/w/api.php"
@@ -307,29 +334,6 @@ class WikiClient:
                     logger.error(f"Error fetching images for chunk: {e}")
 
         return all_edits
-
-    # Simple async cache decorator
-    def async_cache(ttl: int = 30):
-        def decorator(func):
-            cache = {}
-            
-            async def wrapper(self, *args, **kwargs):
-                # Create a key based on args and kwargs
-                # We assume args are hashable (int, str). 
-                # kwargs might need sorting.
-                key = (args, tuple(sorted(kwargs.items())))
-                
-                now = time.time()
-                if key in cache:
-                    result, timestamp = cache[key]
-                    if now - timestamp < ttl:
-                        return result
-                
-                result = await func(self, *args, **kwargs)
-                cache[key] = (result, now)
-                return result
-            return wrapper
-        return decorator
 
     @async_cache(ttl=60)
     async def get_top_edited_articles(self, limit: int = 25, period: str = "24h", anon_only: bool = False, user: Optional[str] = None, title: Optional[str] = None) -> List[Dict]:
