@@ -20,7 +20,6 @@ Edisco is a real-time monitoring dashboard for Hebrew Wikipedia, designed to tra
 *   **Active Paragraph**: Showing the most actively edited paragraph at the "Activity Area".
 #### Fixes
 *   Live Feed - number of edits fix
-*   
 
 ## Installation
 
